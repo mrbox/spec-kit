@@ -7,6 +7,37 @@ All notable changes to the Specify CLI and templates are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.23] - 2026-01-31
+
+### Added
+
+- **Restructured task storage to directory-based format**: Tasks are now stored in a `tasks/` directory with:
+  - `tasks.jsonl` - Task index file with one JSON object per line containing id, summary, file, status, parallel, and depends_on fields
+  - Individual `T###-slug.md` files for each task with detailed frontmatter and structured sections
+- **New task file template** (`templates/task-file-template.md`): Individual task files now include:
+  - YAML frontmatter synced with tasks.jsonl
+  - Previous Related Tasks section for dependency context
+  - Task Details with Objective, File Paths, and Implementation Notes
+  - References to spec, data-model, and contracts
+  - Acceptance Criteria checklist
+- **New validation scripts**: `scripts/bash/validate-tasks.sh` and `scripts/powershell/validate-tasks.ps1` provide comprehensive validation:
+  - JSONL validity checking
+  - File reference verification
+  - Orphan file detection
+  - Frontmatter sync validation
+  - Dependency cycle detection
+  - Status coherence checking
+
+### Changed
+
+- Updated `templates/tasks-template.md` to serve as a README explaining the new directory structure
+- Updated `templates/commands/tasks.md` to generate JSONL + individual task files
+- Updated `templates/commands/implement.md` to read from tasks.jsonl and update status in both JSONL and individual files
+- Updated `templates/commands/analyze.md` to work with the new task structure
+- Updated `templates/commands/taskstoissues.md` to parse JSONL format
+- Updated `scripts/bash/common.sh` and `scripts/powershell/common.ps1` with TASKS_DIR and TASKS_INDEX variables
+- Updated `scripts/bash/check-prerequisites.sh` and `scripts/powershell/check-prerequisites.ps1` to check for tasks/tasks.jsonl
+
 ## [0.0.22] - 2025-11-07
 
 - Support for VS Code/Copilot agents, and moving away from prompts to proper agents with hand-offs.

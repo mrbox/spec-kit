@@ -86,15 +86,16 @@ check_feature_branch "$CURRENT_BRANCH" "$HAS_GIT" || exit 1
 if $PATHS_ONLY; then
     if $JSON_MODE; then
         # Minimal JSON paths payload (no validation performed)
-        printf '{"REPO_ROOT":"%s","BRANCH":"%s","FEATURE_DIR":"%s","FEATURE_SPEC":"%s","IMPL_PLAN":"%s","TASKS":"%s"}\n' \
-            "$REPO_ROOT" "$CURRENT_BRANCH" "$FEATURE_DIR" "$FEATURE_SPEC" "$IMPL_PLAN" "$TASKS"
+        printf '{"REPO_ROOT":"%s","BRANCH":"%s","FEATURE_DIR":"%s","FEATURE_SPEC":"%s","IMPL_PLAN":"%s","TASKS_DIR":"%s","TASKS_INDEX":"%s"}\n' \
+            "$REPO_ROOT" "$CURRENT_BRANCH" "$FEATURE_DIR" "$FEATURE_SPEC" "$IMPL_PLAN" "$TASKS_DIR" "$TASKS_INDEX"
     else
         echo "REPO_ROOT: $REPO_ROOT"
         echo "BRANCH: $CURRENT_BRANCH"
         echo "FEATURE_DIR: $FEATURE_DIR"
         echo "FEATURE_SPEC: $FEATURE_SPEC"
         echo "IMPL_PLAN: $IMPL_PLAN"
-        echo "TASKS: $TASKS"
+        echo "TASKS_DIR: $TASKS_DIR"
+        echo "TASKS_INDEX: $TASKS_INDEX"
     fi
     exit 0
 fi
@@ -112,10 +113,10 @@ if [[ ! -f "$IMPL_PLAN" ]]; then
     exit 1
 fi
 
-# Check for tasks.md if required
-if $REQUIRE_TASKS && [[ ! -f "$TASKS" ]]; then
-    echo "ERROR: tasks.md not found in $FEATURE_DIR" >&2
-    echo "Run /speckit.tasks first to create the task list." >&2
+# Check for tasks/tasks.jsonl if required
+if $REQUIRE_TASKS && [[ ! -f "$TASKS_INDEX" ]]; then
+    echo "ERROR: tasks/tasks.jsonl not found in $FEATURE_DIR" >&2
+    echo "Run /speckit.tasks first to create the task structure." >&2
     exit 1
 fi
 
@@ -133,9 +134,9 @@ fi
 
 [[ -f "$QUICKSTART" ]] && docs+=("quickstart.md")
 
-# Include tasks.md if requested and it exists
-if $INCLUDE_TASKS && [[ -f "$TASKS" ]]; then
-    docs+=("tasks.md")
+# Include tasks/ if requested and it exists
+if $INCLUDE_TASKS && [[ -f "$TASKS_INDEX" ]]; then
+    docs+=("tasks/")
 fi
 
 # Output results
@@ -161,6 +162,6 @@ else
     check_file "$QUICKSTART" "quickstart.md"
     
     if $INCLUDE_TASKS; then
-        check_file "$TASKS" "tasks.md"
+        check_file "$TASKS_INDEX" "tasks/tasks.jsonl"
     fi
 fi
