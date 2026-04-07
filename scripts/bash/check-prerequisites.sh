@@ -9,8 +9,8 @@
 #
 # OPTIONS:
 #   --json              Output in JSON format
-#   --require-tasks     Require tasks.md to exist (for implementation phase)
-#   --include-tasks     Include tasks.md in AVAILABLE_DOCS list
+#   --require-tasks     Require tasks/tasks.jsonl to exist (for implementation phase)
+#   --include-tasks     Include tasks/ in AVAILABLE_DOCS list
 #   --paths-only        Only output path variables (no validation)
 #   --help, -h          Show help message
 #
@@ -49,16 +49,16 @@ Consolidated prerequisite checking for Spec-Driven Development workflow.
 
 OPTIONS:
   --json              Output in JSON format
-  --require-tasks     Require tasks.md to exist (for implementation phase)
-  --include-tasks     Include tasks.md in AVAILABLE_DOCS list
+  --require-tasks     Require tasks/tasks.jsonl to exist (for implementation phase)
+  --include-tasks     Include tasks/ in AVAILABLE_DOCS list
   --paths-only        Only output path variables (no prerequisite validation)
   --help, -h          Show this help message
 
 EXAMPLES:
   # Check task prerequisites (plan.md required)
   ./check-prerequisites.sh --json
-  
-  # Check implementation prerequisites (plan.md + tasks.md required)
+
+  # Check implementation prerequisites (plan.md + tasks/tasks.jsonl required)
   ./check-prerequisites.sh --json --require-tasks --include-tasks
   
   # Get feature paths only (no validation)
@@ -95,11 +95,12 @@ if $PATHS_ONLY; then
                 --arg feature_dir "$FEATURE_DIR" \
                 --arg feature_spec "$FEATURE_SPEC" \
                 --arg impl_plan "$IMPL_PLAN" \
-                --arg tasks "$TASKS" \
-                '{REPO_ROOT:$repo_root,BRANCH:$branch,FEATURE_DIR:$feature_dir,FEATURE_SPEC:$feature_spec,IMPL_PLAN:$impl_plan,TASKS:$tasks}'
+                --arg tasks_dir "$TASKS_DIR" \
+                --arg tasks_index "$TASKS_INDEX" \
+                '{REPO_ROOT:$repo_root,BRANCH:$branch,FEATURE_DIR:$feature_dir,FEATURE_SPEC:$feature_spec,IMPL_PLAN:$impl_plan,TASKS_DIR:$tasks_dir,TASKS_INDEX:$tasks_index}'
         else
-            printf '{"REPO_ROOT":"%s","BRANCH":"%s","FEATURE_DIR":"%s","FEATURE_SPEC":"%s","IMPL_PLAN":"%s","TASKS":"%s"}\n' \
-                "$(json_escape "$REPO_ROOT")" "$(json_escape "$CURRENT_BRANCH")" "$(json_escape "$FEATURE_DIR")" "$(json_escape "$FEATURE_SPEC")" "$(json_escape "$IMPL_PLAN")" "$(json_escape "$TASKS")"
+            printf '{"REPO_ROOT":"%s","BRANCH":"%s","FEATURE_DIR":"%s","FEATURE_SPEC":"%s","IMPL_PLAN":"%s","TASKS_DIR":"%s","TASKS_INDEX":"%s"}\n' \
+                "$(json_escape "$REPO_ROOT")" "$(json_escape "$CURRENT_BRANCH")" "$(json_escape "$FEATURE_DIR")" "$(json_escape "$FEATURE_SPEC")" "$(json_escape "$IMPL_PLAN")" "$(json_escape "$TASKS_DIR")" "$(json_escape "$TASKS_INDEX")"
         fi
     else
         echo "REPO_ROOT: $REPO_ROOT"
@@ -107,7 +108,8 @@ if $PATHS_ONLY; then
         echo "FEATURE_DIR: $FEATURE_DIR"
         echo "FEATURE_SPEC: $FEATURE_SPEC"
         echo "IMPL_PLAN: $IMPL_PLAN"
-        echo "TASKS: $TASKS"
+        echo "TASKS_DIR: $TASKS_DIR"
+        echo "TASKS_INDEX: $TASKS_INDEX"
     fi
     exit 0
 fi
@@ -125,10 +127,10 @@ if [[ ! -f "$IMPL_PLAN" ]]; then
     exit 1
 fi
 
-# Check for tasks.md if required
-if $REQUIRE_TASKS && [[ ! -f "$TASKS" ]]; then
-    echo "ERROR: tasks.md not found in $FEATURE_DIR" >&2
-    echo "Run /speckit.tasks first to create the task list." >&2
+# Check for tasks/tasks.jsonl if required
+if $REQUIRE_TASKS && [[ ! -f "$TASKS_INDEX" ]]; then
+    echo "ERROR: tasks/tasks.jsonl not found in $FEATURE_DIR" >&2
+    echo "Run /speckit.tasks first to create the task structure." >&2
     exit 1
 fi
 
@@ -146,9 +148,9 @@ fi
 
 [[ -f "$QUICKSTART" ]] && docs+=("quickstart.md")
 
-# Include tasks.md if requested and it exists
-if $INCLUDE_TASKS && [[ -f "$TASKS" ]]; then
-    docs+=("tasks.md")
+# Include tasks/ if requested and it exists
+if $INCLUDE_TASKS && [[ -f "$TASKS_INDEX" ]]; then
+    docs+=("tasks/")
 fi
 
 # Output results
@@ -185,6 +187,6 @@ else
     check_file "$QUICKSTART" "quickstart.md"
     
     if $INCLUDE_TASKS; then
-        check_file "$TASKS" "tasks.md"
+        check_file "$TASKS_INDEX" "tasks/tasks.jsonl"
     fi
 fi

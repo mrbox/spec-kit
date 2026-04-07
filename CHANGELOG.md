@@ -2,6 +2,19 @@
 
 <!-- insert new changelog below this comment -->
 
+## [0.5.1] - 2026-04-07
+
+### Changed
+
+- Restructured task storage to directory-based JSONL format:
+  - `tasks/tasks.jsonl` — task index (one JSON object per line) with id, summary, file, status, parallel, depends_on
+  - Individual `T###-slug.md` files with YAML frontmatter, objectives, file paths, and acceptance criteria
+- Updated `scripts/bash/common.sh` and `scripts/powershell/common.ps1` to expose `TASKS_DIR` and `TASKS_INDEX` instead of `TASKS`
+- Updated `check-prerequisites.sh` and `check-prerequisites.ps1` to validate `tasks/tasks.jsonl`
+- Updated `templates/commands/tasks.md` to generate JSONL + individual task files
+- Updated `templates/commands/implement.md` to read JSONL and update status in both files
+- Updated `templates/commands/analyze.md` and `taskstoissues.md` for new task structure
+
 ## [0.5.0] - 2026-04-02
 
 ### Changed

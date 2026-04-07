@@ -9,8 +9,8 @@
 #
 # OPTIONS:
 #   -Json               Output in JSON format
-#   -RequireTasks       Require tasks.md to exist (for implementation phase)
-#   -IncludeTasks       Include tasks.md in AVAILABLE_DOCS list
+#   -RequireTasks       Require tasks/tasks.jsonl to exist (for implementation phase)
+#   -IncludeTasks       Include tasks/ in AVAILABLE_DOCS list
 #   -PathsOnly          Only output path variables (no validation)
 #   -Help, -h           Show help message
 
@@ -34,16 +34,16 @@ Consolidated prerequisite checking for Spec-Driven Development workflow.
 
 OPTIONS:
   -Json               Output in JSON format
-  -RequireTasks       Require tasks.md to exist (for implementation phase)
-  -IncludeTasks       Include tasks.md in AVAILABLE_DOCS list
+  -RequireTasks       Require tasks/tasks.jsonl to exist (for implementation phase)
+  -IncludeTasks       Include tasks/ in AVAILABLE_DOCS list
   -PathsOnly          Only output path variables (no prerequisite validation)
   -Help, -h           Show this help message
 
 EXAMPLES:
   # Check task prerequisites (plan.md required)
   .\check-prerequisites.ps1 -Json
-  
-  # Check implementation prerequisites (plan.md + tasks.md required)
+
+  # Check implementation prerequisites (plan.md + tasks/tasks.jsonl required)
   .\check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks
   
   # Get feature paths only (no validation)
@@ -72,7 +72,8 @@ if ($PathsOnly) {
             FEATURE_DIR  = $paths.FEATURE_DIR
             FEATURE_SPEC = $paths.FEATURE_SPEC
             IMPL_PLAN    = $paths.IMPL_PLAN
-            TASKS        = $paths.TASKS
+            TASKS_DIR    = $paths.TASKS_DIR
+            TASKS_INDEX  = $paths.TASKS_INDEX
         } | ConvertTo-Json -Compress
     } else {
         Write-Output "REPO_ROOT: $($paths.REPO_ROOT)"
@@ -80,7 +81,8 @@ if ($PathsOnly) {
         Write-Output "FEATURE_DIR: $($paths.FEATURE_DIR)"
         Write-Output "FEATURE_SPEC: $($paths.FEATURE_SPEC)"
         Write-Output "IMPL_PLAN: $($paths.IMPL_PLAN)"
-        Write-Output "TASKS: $($paths.TASKS)"
+        Write-Output "TASKS_DIR: $($paths.TASKS_DIR)"
+        Write-Output "TASKS_INDEX: $($paths.TASKS_INDEX)"
     }
     exit 0
 }
@@ -98,10 +100,10 @@ if (-not (Test-Path $paths.IMPL_PLAN -PathType Leaf)) {
     exit 1
 }
 
-# Check for tasks.md if required
-if ($RequireTasks -and -not (Test-Path $paths.TASKS -PathType Leaf)) {
-    Write-Output "ERROR: tasks.md not found in $($paths.FEATURE_DIR)"
-    Write-Output "Run /speckit.tasks first to create the task list."
+# Check for tasks/tasks.jsonl if required
+if ($RequireTasks -and -not (Test-Path $paths.TASKS_INDEX -PathType Leaf)) {
+    Write-Output "ERROR: tasks/tasks.jsonl not found in $($paths.FEATURE_DIR)"
+    Write-Output "Run /speckit.tasks first to create the task structure."
     exit 1
 }
 
@@ -119,9 +121,9 @@ if ((Test-Path $paths.CONTRACTS_DIR) -and (Get-ChildItem -Path $paths.CONTRACTS_
 
 if (Test-Path $paths.QUICKSTART) { $docs += 'quickstart.md' }
 
-# Include tasks.md if requested and it exists
-if ($IncludeTasks -and (Test-Path $paths.TASKS)) { 
-    $docs += 'tasks.md' 
+# Include tasks/ if requested and it exists
+if ($IncludeTasks -and (Test-Path $paths.TASKS_INDEX)) {
+    $docs += 'tasks/'
 }
 
 # Output results
@@ -143,6 +145,6 @@ if ($Json) {
     Test-FileExists -Path $paths.QUICKSTART -Description 'quickstart.md' | Out-Null
     
     if ($IncludeTasks) {
-        Test-FileExists -Path $paths.TASKS -Description 'tasks.md' | Out-Null
+        Test-FileExists -Path $paths.TASKS_INDEX -Description 'tasks/tasks.jsonl' | Out-Null
     }
 }
