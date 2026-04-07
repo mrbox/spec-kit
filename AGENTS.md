@@ -10,10 +10,6 @@ The toolkit supports multiple AI coding assistants, allowing teams to use their 
 
 ---
 
-## General practices
-
-- Any changes to `__init__.py` for the Specify CLI require a version rev in `pyproject.toml` and addition of entries to `CHANGELOG.md`.
-
 ## Adding New Agent Support
 
 This section explains how to add support for new AI agents/assistants to the Specify CLI. Use this guide as a reference when integrating new AI tools into the Spec-Driven Development workflow.
@@ -34,20 +30,30 @@ Specify supports multiple AI agents by generating agent-specific command files a
 | **Claude Code**            | `.claude/commands/`    | Markdown | `claude`        | Anthropic's Claude Code CLI |
 | **Gemini CLI**             | `.gemini/commands/`    | TOML     | `gemini`        | Google's Gemini CLI         |
 | **GitHub Copilot**         | `.github/agents/`      | Markdown | N/A (IDE-based) | GitHub Copilot in VS Code   |
-| **Cursor**                 | `.cursor/commands/`    | Markdown | `cursor-agent`  | Cursor CLI                  |
-| **Qwen Code**              | `.qwen/commands/`      | TOML     | `qwen`          | Alibaba's Qwen Code CLI     |
+| **Cursor**                 | `.cursor/commands/`    | Markdown | N/A (IDE-based) | Cursor IDE (`--ai cursor-agent`) |
+| **Qwen Code**              | `.qwen/commands/`      | Markdown | `qwen`          | Alibaba's Qwen Code CLI     |
 | **opencode**               | `.opencode/command/`   | Markdown | `opencode`      | opencode CLI                |
-| **Codex CLI**              | `.codex/commands/`     | Markdown | `codex`         | Codex CLI                   |
+| **Codex CLI**              | `.agents/skills/`      | Markdown | `codex`         | Codex CLI (`--ai codex --ai-skills`) |
 | **Windsurf**               | `.windsurf/workflows/` | Markdown | N/A (IDE-based) | Windsurf IDE workflows      |
-| **Kilo Code**              | `.kilocode/rules/`     | Markdown | N/A (IDE-based) | Kilo Code IDE               |
-| **Auggie CLI**             | `.augment/rules/`      | Markdown | `auggie`        | Auggie CLI                  |
-| **Roo Code**               | `.roo/rules/`          | Markdown | N/A (IDE-based) | Roo Code IDE                |
+| **Junie**                  | `.junie/commands/`     | Markdown | `junie`         | Junie by JetBrains          |
+| **Kilo Code**              | `.kilocode/workflows/` | Markdown | N/A (IDE-based) | Kilo Code IDE               |
+| **Auggie CLI**             | `.augment/commands/`   | Markdown | `auggie`        | Auggie CLI                  |
+| **Roo Code**               | `.roo/commands/`       | Markdown | N/A (IDE-based) | Roo Code IDE                |
 | **CodeBuddy CLI**          | `.codebuddy/commands/` | Markdown | `codebuddy`     | CodeBuddy CLI               |
-| **Qoder CLI**              | `.qoder/commands/`     | Markdown | `qoder`         | Qoder CLI                   |
-| **Amazon Q Developer CLI** | `.amazonq/prompts/`    | Markdown | `q`             | Amazon Q Developer CLI      |
+| **Qoder CLI**              | `.qoder/commands/`     | Markdown | `qodercli`      | Qoder CLI                   |
+| **Kiro CLI**               | `.kiro/prompts/`       | Markdown | `kiro-cli`      | Kiro CLI                    |
 | **Amp**                    | `.agents/commands/`    | Markdown | `amp`           | Amp CLI                     |
 | **SHAI**                   | `.shai/commands/`      | Markdown | `shai`          | SHAI CLI                    |
+| **Tabnine CLI**            | `.tabnine/agent/commands/` | TOML | `tabnine`       | Tabnine CLI                 |
+| **Kimi Code**              | `.kimi/skills/`        | Markdown | `kimi`          | Kimi Code CLI (Moonshot AI) |
+| **Pi Coding Agent**        | `.pi/prompts/`         | Markdown | `pi`            | Pi terminal coding agent    |
+| **iFlow CLI**              | `.iflow/commands/`     | Markdown | `iflow`         | iFlow CLI (iflow-ai)        |
+| **Forge**                  | `.forge/commands/`     | Markdown | `forge`         | Forge CLI (forgecode.dev)   |
 | **IBM Bob**                | `.bob/commands/`       | Markdown | N/A (IDE-based) | IBM Bob IDE                 |
+| **Trae**                   | `.trae/rules/`         | Markdown | N/A (IDE-based) | Trae IDE                    |
+| **Antigravity**            | `.agent/commands/`     | Markdown | N/A (IDE-based) | Antigravity IDE (`--ai agy --ai-skills`) |
+| **Mistral Vibe**           | `.vibe/prompts/`       | Markdown | `vibe`          | Mistral Vibe CLI            |
+| **Generic**                | User-specified via `--ai-commands-dir` | Markdown | N/A | Bring your own agent        |
 
 ### Step-by-Step Integration Guide
 
@@ -65,6 +71,7 @@ AGENT_CONFIG = {
     "new-agent-cli": {  # Use the ACTUAL CLI tool name (what users type in terminal)
         "name": "New Agent Display Name",
         "folder": ".newagent/",  # Directory for agent files
+        "commands_subdir": "commands",  # Subdirectory name for command files (default: "commands")
         "install_url": "https://example.com/install",  # URL for installation docs (or None if IDE-based)
         "requires_cli": True,  # True if CLI tool required, False for IDE-based agents
     },
@@ -82,6 +89,10 @@ This eliminates the need for special-case mappings throughout the codebase.
 
 - `name`: Human-readable display name shown to users
 - `folder`: Directory where agent-specific files are stored (relative to project root)
+- `commands_subdir`: Subdirectory name within the agent folder where command/prompt files are stored (default: `"commands"`)
+  - Most agents use `"commands"` (e.g., `.claude/commands/`)
+  - Some agents use alternative names: `"agents"` (copilot), `"workflows"` (windsurf, kilocode), `"prompts"` (codex, kiro-cli, pi), `"command"` (opencode - singular)
+  - This field enables `--ai-skills` to locate command templates correctly for skill generation
 - `install_url`: Installation documentation URL (set to `None` for IDE-based agents)
 - `requires_cli`: Whether the agent requires a CLI tool check during initialization
 
@@ -90,7 +101,7 @@ This eliminates the need for special-case mappings throughout the codebase.
 Update the `--ai` parameter help text in the `init()` command to include the new agent:
 
 ```python
-ai_assistant: str = typer.Option(None, "--ai", help="AI assistant to use: claude, gemini, copilot, cursor-agent, qwen, opencode, codex, windsurf, kilocode, auggie, codebuddy, new-agent-cli, or q"),
+ai_assistant: str = typer.Option(None, "--ai", help="AI assistant to use: claude, gemini, copilot, cursor-agent, qwen, opencode, codex, windsurf, kilocode, auggie, codebuddy, new-agent-cli, or kiro-cli"),
 ```
 
 Also update any function docstrings, examples, and error messages that list available agents.
@@ -111,7 +122,7 @@ Modify `.github/workflows/scripts/create-release-packages.sh`:
 ##### Add to ALL_AGENTS array
 
 ```bash
-ALL_AGENTS=(claude gemini copilot cursor-agent qwen opencode windsurf q)
+ALL_AGENTS=(claude gemini copilot cursor-agent qwen opencode windsurf kiro-cli)
 ```
 
 ##### Add case statement for directory structure
@@ -308,28 +319,41 @@ Require a command-line tool to be installed:
 
 - **Claude Code**: `claude` CLI
 - **Gemini CLI**: `gemini` CLI
-- **Cursor**: `cursor-agent` CLI
 - **Qwen Code**: `qwen` CLI
 - **opencode**: `opencode` CLI
-- **Amazon Q Developer CLI**: `q` CLI
+- **Codex CLI**: `codex` CLI (requires `--ai-skills`)
+- **Junie**: `junie` CLI
+- **Auggie CLI**: `auggie` CLI
 - **CodeBuddy CLI**: `codebuddy` CLI
-- **Qoder CLI**: `qoder` CLI
+- **Qoder CLI**: `qodercli` CLI
+- **Kiro CLI**: `kiro-cli` CLI
 - **Amp**: `amp` CLI
 - **SHAI**: `shai` CLI
+- **Tabnine CLI**: `tabnine` CLI
+- **Kimi Code**: `kimi` CLI
+- **Mistral Vibe**: `vibe` CLI
+- **Pi Coding Agent**: `pi` CLI
+- **iFlow CLI**: `iflow` CLI
+- **Forge**: `forge` CLI
 
 ### IDE-Based Agents
 
 Work within integrated development environments:
 
 - **GitHub Copilot**: Built into VS Code/compatible editors
+- **Cursor**: Built into Cursor IDE (`--ai cursor-agent`)
 - **Windsurf**: Built into Windsurf IDE
+- **Kilo Code**: Built into Kilo Code IDE
+- **Roo Code**: Built into Roo Code IDE
 - **IBM Bob**: Built into IBM Bob IDE
+- **Trae**: Built into Trae IDE
+- **Antigravity**: Built into Antigravity IDE (`--ai agy --ai-skills`)
 
 ## Command File Formats
 
 ### Markdown Format
 
-Used by: Claude, Cursor, opencode, Windsurf, Amazon Q Developer, Amp, SHAI, IBM Bob
+Used by: Claude, Cursor, GitHub Copilot, opencode, Windsurf, Junie, Kiro CLI, Amp, SHAI, IBM Bob, Kimi Code, Qwen, Pi, Codex, Auggie, CodeBuddy, Qoder, Roo Code, Kilo Code, Trae, Antigravity, Mistral Vibe, iFlow, Forge
 
 **Standard format:**
 
@@ -354,7 +378,7 @@ Command content with {SCRIPT} and $ARGUMENTS placeholders.
 
 ### TOML Format
 
-Used by: Gemini, Qwen
+Used by: Gemini, Tabnine
 
 ```toml
 description = "Command description"
@@ -367,10 +391,29 @@ Command content with {SCRIPT} and {{args}} placeholders.
 ## Directory Conventions
 
 - **CLI agents**: Usually `.<agent-name>/commands/`
+- **Singular command exception**:
+  - opencode: `.opencode/command/` (singular `command`, not `commands`)
+- **Nested path exception**:
+  - Tabnine: `.tabnine/agent/commands/` (extra `agent/` segment)
+- **Shared `.agents/` folder**:
+  - Amp: `.agents/commands/` (shared folder, not `.amp/`)
+  - Codex: `.agents/skills/` (shared folder; requires `--ai-skills`; invoked as `$speckit-<command>`)
+- **Skills-based exceptions**:
+  - Kimi Code: `.kimi/skills/` (skills, invoked as `/skill:speckit-<command>`)
+- **Prompt-based exceptions**:
+  - Kiro CLI: `.kiro/prompts/`
+  - Pi: `.pi/prompts/`
+  - Mistral Vibe: `.vibe/prompts/`
+- **Rules-based exceptions**:
+  - Trae: `.trae/rules/`
 - **IDE agents**: Follow IDE-specific patterns:
   - Copilot: `.github/agents/`
   - Cursor: `.cursor/commands/`
   - Windsurf: `.windsurf/workflows/`
+  - Kilo Code: `.kilocode/workflows/`
+  - Roo Code: `.roo/commands/`
+  - IBM Bob: `.bob/commands/`
+  - Antigravity: `.agent/skills/` (`--ai-skills` required; `.agent/commands/` is deprecated)
 
 ## Argument Patterns
 
@@ -378,8 +421,48 @@ Different agents use different argument placeholders:
 
 - **Markdown/prompt-based**: `$ARGUMENTS`
 - **TOML-based**: `{{args}}`
+- **Forge-specific**: `{{parameters}}` (uses custom parameter syntax)
 - **Script placeholders**: `{SCRIPT}` (replaced with actual script path)
 - **Agent placeholders**: `__AGENT__` (replaced with agent name)
+
+## Special Processing Requirements
+
+Some agents require custom processing beyond the standard template transformations:
+
+### Copilot Integration
+
+GitHub Copilot has unique requirements:
+- Commands use `.agent.md` extension (not `.md`)
+- Each command gets a companion `.prompt.md` file in `.github/prompts/`
+- Installs `.vscode/settings.json` with prompt file recommendations
+- Context file lives at `.github/copilot-instructions.md`
+
+Implementation: Extends `IntegrationBase` with custom `setup()` method that:
+1. Processes templates with `process_template()`
+2. Generates companion `.prompt.md` files
+3. Merges VS Code settings
+
+### Forge Integration
+
+Forge has special frontmatter and argument requirements:
+- Uses `{{parameters}}` instead of `$ARGUMENTS`
+- Strips `handoffs` frontmatter key (Forge-specific collaboration feature)
+- Injects `name` field into frontmatter when missing
+
+Implementation: Extends `MarkdownIntegration` with custom `setup()` method that:
+1. Inherits standard template processing from `MarkdownIntegration`
+2. Adds extra `$ARGUMENTS` → `{{parameters}}` replacement after template processing
+3. Applies Forge-specific transformations via `_apply_forge_transformations()`
+4. Strips `handoffs` frontmatter key
+5. Injects missing `name` fields
+6. Ensures the shared `update-agent-context.*` scripts include a `forge` case that maps context updates to `AGENTS.md` (similar to `opencode`/`codex`/`pi`) and lists `forge` in their usage/help text
+
+### Standard Markdown Agents
+
+Most agents (Bob, Claude, Windsurf, etc.) use `MarkdownIntegration`:
+- Simple subclass with just `key`, `config`, `registrar_config` set
+- Inherits standard processing from `MarkdownIntegration.setup()`
+- No custom processing needed
 
 ## Testing New Agent Integration
 
