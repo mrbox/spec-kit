@@ -33,6 +33,7 @@ packages = ["src/specify_cli"]
 "templates/constitution-template.md" = "specify_cli/core_pack/templates/constitution-template.md"
 "templates/plan-template.md" = "specify_cli/core_pack/templates/plan-template.md"
 "templates/spec-template.md" = "specify_cli/core_pack/templates/spec-template.md"
+"templates/task-file-template.md" = "specify_cli/core_pack/templates/task-file-template.md"
 "templates/tasks-template.md" = "specify_cli/core_pack/templates/tasks-template.md"
 "templates/vscode-settings.json" = "specify_cli/core_pack/templates/vscode-settings.json"
 # Command templates

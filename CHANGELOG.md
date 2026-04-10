@@ -2,7 +2,11 @@
 
 <!-- insert new changelog below this comment -->
 
-## [0.5.1] - 2026-04-07
+## [0.5.1] - 2026-04-10
+
+### Fixed
+
+- Bundle `task-file-template.md` in the wheel so it is available when running via `uvx`
 
 ### Changed
 
